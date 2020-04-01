@@ -10,7 +10,17 @@
 |
 */
 
-
+/*
+|-----------------------------------------
+| API v1 endpoints For integrating with  other Information Management Systems
+|-----------------------------------------
+*/
+Route::group(array('prefix' => 'api/v1'), function(){
+    Route::resource('specimens', 'ApiV1Controller@getSpecimens');
+    Route::resource('specimen_tests', 'ApiV1Controller@getSpecimenTests');
+    Route::resource('sections', 'ApiV1Controller@getLabSections');
+    Route::resource('users', 'ApiV1Controller@getUsers');
+});
 
 /* Routes accessible before logging in */
 Route::group(array("before" => "guest"), function()
