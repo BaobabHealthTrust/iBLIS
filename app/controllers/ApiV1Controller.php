@@ -70,7 +70,7 @@ class ApiV1Controller extends \BaseController {
 			$patient->id, Input::get('visit_type'), Input::get('ward')
 		);
 		$order = OrdersService::order(
-			Input::get('user_id'), $visit->id, Input::get('testtypes'),
+			Input::get('accession_number'), Input::get('user_id'), $visit->id, Input::get('testtypes'),
 			$specimen->id, Test::PENDING, Input::get('physician')
 		);
 		$code = 201;

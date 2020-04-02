@@ -2,6 +2,7 @@
 
 class OrdersService {
     const VALIDATION_RULES  = array(
+        'accession_number' => 'required',
         'user_id' => 'required',
         'visit_type' => 'required',
         'ward' => 'required',
@@ -16,7 +17,7 @@ class OrdersService {
         return $validator->fails() ? $validator->errors() : [];
     }
 
-    public static function order($user, $visit, $test_types, $specimen, $status, $physician){
+    public static function order($accession_number, $user, $visit, $test_types, $specimen, $status, $physician){
         $orders = [];
         if(is_array($test_types) && count($test_types) > 0){
             foreach ($test_types as $test_type) { 
@@ -30,7 +31,7 @@ class OrdersService {
                         foreach ($panel_tests AS $t_type) { 
                             if(LabTestService::isTestDuplicate($t_type->test_type_id, $specimen)){
                                $orders[] = LabTestService::createTest(
-                                    $visit, $user, $t_type->test_type_id, $specimen, $status, $panel,$physician
+                                    $accession_number, $visit, $user, $t_type->test_type_id, $specimen, $status, $panel,$physician
                                 );
                             }
                         }
@@ -38,7 +39,7 @@ class OrdersService {
                 }else{
                     if(LabTestService::isTestDuplicate($test_type_id, $specimen)){
                         $orders[] = LabTestService::createTest(
-                            $visit, $user, $test_type_id, $specimen, $status, null, $physician
+                            $accession_number, $visit, $user, $test_type_id, $specimen, $status, null, $physician
                         ); 
                     } 
                 }

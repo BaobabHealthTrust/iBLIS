@@ -1,7 +1,7 @@
 <?php
 
 class LabTestService {
-    public static function createTest($visit, $user, $test_type, $specimen, $status, $panel, $physician)
+    public static function createTest($accession_number, $visit, $user, $test_type, $specimen, $status, $panel, $physician)
     {
         $test = new Test;
         $test->visit_id = $visit;
@@ -11,6 +11,7 @@ class LabTestService {
         $test->created_by =  $user;
         $test->panel_id = $panel;
         $test->requested_by = $physician;
+        $test->accession_number = $accession_number;
         $test->save();
         return $test;
     }
