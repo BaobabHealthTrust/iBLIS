@@ -59,7 +59,7 @@ class ApiV1Controller extends \BaseController {
 
 		$order = OrdersService::order(
 			Input::get('patient_id'),
-			Auth::user()->id,  
+			Input::get('user_id'),  
 			Input::get('visit_type'),
 			Input::get('testtypes'),
 			Input::get('specimen_type'),
