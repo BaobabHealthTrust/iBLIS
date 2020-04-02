@@ -10,4 +10,9 @@ class VisitService {
         $visit->save();
         return $visit;
     }
+    
+    public static function getVisitTypes()
+	{
+		return VisitType::orderBy('name', 'ASC')->get();
+	}
 }

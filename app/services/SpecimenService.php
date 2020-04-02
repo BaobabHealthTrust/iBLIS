@@ -11,4 +11,20 @@ class SpecimenService {
         $specimen->save();
         return $specimen;
     }
+
+    public static function getSpecimens()
+	{
+		$specimentypes = SpecimenType::select('id as specimen_id', 'name')->get();
+		return $specimentypes;
+    }
+    
+    public static function getSpecimenTests($specimen_id)
+	{
+		$testtypes = DB::table('testtype_specimentypes')
+						->select('test_type_id', 'test_types.name as name')
+						->join('test_types', 'test_type_id', '=', 'test_types.id')
+						->where('specimen_type_id', '=', $specimen_id)
+						->get();
+	    return $testtypes;
+	}
 }

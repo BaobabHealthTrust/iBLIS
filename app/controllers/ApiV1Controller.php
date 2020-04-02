@@ -3,50 +3,41 @@ class ApiV1Controller extends \BaseController {
 
 	public function getSpecimens()
 	{
-		$specimentypes = SpecimenType::select('id as specimen_id', 'name')->get();
 		return Response::json(array (
 			'error' => false,
-			'data' => $specimentypes
+			'data' => SpecimenService::getSpecimens()
 		), 200);
 	}
 
 	public function getSpecimenTests($specimen_id)
 	{
-		$testtypes = DB::table('testtype_specimentypes')
-						->select('test_type_id', 'test_types.name as name')
-						->join('test_types', 'test_type_id', '=', 'test_types.id')
-						->where('specimen_type_id', '=', $specimen_id)
-						->get();
 	    return Response::json(array (
 			'error' => false,
-			'data' => $testtypes
+			'data' => SpecimenService::getSpecimenTests($specimen_id)
 		), 200);
 	}
 
 	public function getVisitTypes()
 	{
-		$visittypes = VisitType::orderBy('name', 'ASC')->get();
 		return Response::json(array (
 			'error' => false,
-			'data' => $visittypes
+			'data' => VisitService::getVisitTypes()
 		), 200);
 	}
 
 	public function getLabSections()
 	{
-		$labsections = TestCategory::get();
 		return Response::json(array (
 			'error' => false,
-			'data' => $labsections 
+			'data' => TestCategory::get() 
 		), 200);
 	}
 	
 	public function getUsers()
 	{
-		$users = User::select('id', 'username', 'email', 'name', 'designation')->get();
 		return Response::json(array (
 			'error' => false,
-			'data' => $users 
+			'data' => User::select('id', 'username', 'email', 'name', 'designation')->get() 
 		), 200);
 	}
 
