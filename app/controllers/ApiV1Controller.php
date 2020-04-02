@@ -82,4 +82,22 @@ class ApiV1Controller extends \BaseController {
 		}
 		return Response::json(array ('error' => $error, 'data' => $order ), $code);
 	}
+
+	public function getTestResults($accession_number)
+	{
+		$test = LabTestService::getTestByAccessionNumber($accession_number);
+		$error = false;
+		$code = 200;
+		$data = [];
+		if ($test){
+			$data = ResultsService::getResultsByAccessionNumber($test->id);
+		}else{
+			$code = 404;
+			$error = true;
+		}
+		return Response::json(array (
+			'error'=> $error, 
+			'data' => $data
+		), $code);
+	}
 }

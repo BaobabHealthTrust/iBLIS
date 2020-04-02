@@ -16,6 +16,11 @@ class LabTestService {
         return $test;
     }
 
+    public static function getTestByAccessionNumber($accession_number)
+    {
+        return DB::table('tests')->where('accession_number', $accession_number)->first();
+    }
+
     public static function getPanelType($test_type)
     {
         return PanelType::where('name', '=', $test_type)->first()->id;
