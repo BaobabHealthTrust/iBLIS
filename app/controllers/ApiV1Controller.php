@@ -53,7 +53,6 @@ class ApiV1Controller extends \BaseController {
 
 	public function placeTestOrder()
 	{
-		//Create New Test
 		$rules = array(
 			'user_id' => 'required',
 			'visit_type' => 'required',
@@ -63,14 +62,12 @@ class ApiV1Controller extends \BaseController {
 		);
 		$validator = Validator::make(Input::all(), $rules);
 
-		// process the login
 		if ($validator->fails()) {
 			return Response::json(array (
 				'error' => true,
 				'data' => $validator->errors()
 			), 400);
 		} else {
-			$visitType = ['Out-patient','In-patient'];
 			$activeTest = array();
 
 			/*
@@ -92,66 +89,14 @@ class ApiV1Controller extends \BaseController {
 			$panelNames = array_diff($testTypes, array_filter($testTypes, 'is_numeric'));
 			$testTypeNames = array_merge($testTypeNames, $panelNames);
 
-			$patient = $visit->patient;
-			$split_name = explode(' ', $patient->name);
-			$first_name = $split_name[0];
-			$last_name = '';
-			$middle_name = '';
-			if(sizeof($split_name) > 1){
-				$last_name = $split_name[sizeof($split_name) - 1];
-			}
-
-			if(sizeof($split_name) > 2){
-				$middle_name = $split_name[1];
-			}
-
-			$json = Array( 'return_path' => "",
-				'district' => Config::get('kblis.district'),
-				'health_facility_name'=> Config::get('kblis.organization'),
-				'first_name' => $first_name,
-				'last_name' => $last_name,
-				'middle_name' => $middle_name,
-				'date_of_birth'=> $patient->dob,
-				'gender'=> ($patient->gender == '1' ? "F" : "M"),
-				'national_patient_id' => $patient->external_patient_number,
-				'phone_number' => $patient->phone_number,
-				'reason_for_test' => '',
-				'sample_collector_last_name' => (isset(explode(' ', Input::get('physician'))[1]) ? explode(' ', Input::get('physician'))[1] : ''),
-				'sample_collector_first_name' => explode(' ', Input::get('physician'))[0],
-				'sample_collector_phone_number' => '',
-				'sample_collector_id' => '',
-				'sample_order_location' => Input::get('ward'),
-				'sample_type' => SpecimenType::find(Input::get('specimen_type'))->name,
-				'date_sample_drawn' => date('Y-m-d'),
-				'tests' => $testTypeNames,
-				'sample_priority' => (Input::get('priority') ? Input::get('priority') : 'Routine'),
-				'target_lab' => Config::get('kblis.organization'),
-				'tracking_number'  => "",
-				'art_start_date'  => "",
-				'date_dispatched'  => "",
-				'date_received'  => date('Y-m-d'),
-				'return_json' => 'true'
-			);
-
-			$data_string = json_encode($json);
-			$ch = curl_init( Config::get('kblis.national-repo-node')."/create_hl7_order");
-			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-					'Content-Type: application/json',
-					'Accept: application/json',
-					'Content-Length: ' . strlen($data_string))
-			);
 			$specimen = null;
-			$response = json_decode(curl_exec($ch));
 			if(is_array($testTypes) && count($testTypes) > 0){
 
 				// Create Specimen - specimen_type_id, accepted_by, referred_from, referred_to
 				$specimen = new Specimen;
 				$specimen->specimen_type_id = Input::get('specimen_type');
 				$specimen->accepted_by = Input::get('user_id');
-				$specimen->tracking_number = $response->tracking_number;
+				$specimen->tracking_number = null;
 				$specimen->accession_number = Specimen::assignAccessionNumber();
 				$specimen->save();
 
@@ -214,7 +159,6 @@ class ApiV1Controller extends \BaseController {
 				}
 			}
 
-			Sender::send_data($patient, Specimen::find($specimen->id));
 			return Response::json(array (
 				'error' => false,
 				'data' =>  $activeTest 
