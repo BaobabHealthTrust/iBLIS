@@ -1,11 +1,14 @@
 <?php
+
 class OrdersService {
     const VALIDATION_RULES  = array(
         'user_id' => 'required',
         'visit_type' => 'required',
         'ward' => 'required',
         'physician' => 'required',
-        'testtypes' => 'required',
+        'specimen_type' => 'required',
+        'specimen_tracking_number' => 'required',
+        'testtypes' => 'required'
     );
 
     public static function validate($data) {
@@ -27,10 +30,8 @@ class OrdersService {
                 {
                     $panel_type = LabTestService::getPanelType($test_type);
                     $panel_tests = LabTestService::getPanelTests($panel_type);
-                    
                     if(count($panel_tests) > 0) {
                         $panel = LabTestService::createPanel($panel_type);
-
                         foreach ($panel_tests AS $t_type) { 
                             if(LabTestService::isTestDuplicate($t_type->test_type_id, $specimen->id)){
                                $orders[] = LabTestService::createTest(
@@ -42,9 +43,9 @@ class OrdersService {
                 }else{
                     if(LabTestService::isTestDuplicate($test_type_id, $specimen->id)){
                         $orders[] = LabTestService::createTest(
-                            $visit->id, $user, $test_type_id, $specimen->id, $status, $panel, $physician
+                            $visit->id, $user, $test_type_id, $specimen->id, $status, null, $physician
                         ); 
-                    }
+                    } 
                 }
             }
         }
