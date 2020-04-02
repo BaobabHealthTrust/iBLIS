@@ -52,21 +52,26 @@ class ApiV1Controller extends \BaseController {
 
 	public function placeTestOrder()
 	{
-		$validationErrors = OrdersService::validate(Input::all());
-		if (count($validationErrors) > 0) {
-			return Response::json(array ('error' => true, 'data' => $validationErrors), 400);
+		$orderValidationErrors = OrdersService::validate(Input::all());
+		$patientValidationErrors = PatientService::validate(Input::get('person'));
+		
+		if (count($orderValidationErrors) > 0 or count($patientValidationErrors) > 0) {
+			return Response::json(array (
+				'error' => true, 'data' => ['order' => $orderValidationErrors, 
+				'person'=> $patientValidationErrors]), 
+				400);
 		}
-
+		$patient = PatientService::getPatient(Input::get('user_id'), Input::get('person'));
+		$specimen = SpecimenService::createSpecimen(
+				Input::get('specimen_type'), Input::get('user_id'), 
+				Input::get('specimen_tracking_number')
+			);
+		$visit = VisitService::createVisit(
+			$patient->id, Input::get('visit_type'), Input::get('ward')
+		);
 		$order = OrdersService::order(
-			Input::get('patient_id'),
-			Input::get('user_id'),  
-			Input::get('visit_type'),
-			Input::get('testtypes'),
-			Input::get('specimen_type'),
-			Input::get('specimen_tracking_number'),
-			Test::PENDING,
-			Input::get('physician'),
-			Input::get('ward')
+			Input::get('user_id'), $visit->id, Input::get('testtypes'),
+			$specimen->id, Test::PENDING, Input::get('physician')
 		);
 		$code = 201;
 		$error = false;
@@ -76,6 +81,5 @@ class ApiV1Controller extends \BaseController {
 			$code = 400;
 		}
 		return Response::json(array ('error' => $error, 'data' => $order ), $code);
-
 	}
 }

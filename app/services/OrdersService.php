@@ -16,14 +16,9 @@ class OrdersService {
         return $validator->fails() ? $validator->errors() : [];
     }
 
-    public static function order($patient, $user, $visit_type, $test_types, $specimen_type, 
-        $specimen_tracking_number, $status, $physician, $ward){
-
+    public static function order($user, $visit, $test_types, $specimen, $status, $physician){
         $orders = [];
-        $visit = VisitService::createVisit($patient, $visit_type, $ward);
-
         if(is_array($test_types) && count($test_types) > 0){
-            $specimen = SpecimenService::createSpecimen($specimen_type, $user, $specimen_tracking_number);
             foreach ($test_types as $test_type) { 
                 $test_type_id = (int) $test_type;
                 if ($test_type_id == 0)
@@ -33,17 +28,17 @@ class OrdersService {
                     if(count($panel_tests) > 0) {
                         $panel = LabTestService::createPanel($panel_type);
                         foreach ($panel_tests AS $t_type) { 
-                            if(LabTestService::isTestDuplicate($t_type->test_type_id, $specimen->id)){
+                            if(LabTestService::isTestDuplicate($t_type->test_type_id, $specimen)){
                                $orders[] = LabTestService::createTest(
-                                    $visit->id, $user, $t_type->test_type_id, $specimen->id, $status, $panel,$physician
+                                    $visit, $user, $t_type->test_type_id, $specimen, $status, $panel,$physician
                                 );
                             }
                         }
                     }
                 }else{
-                    if(LabTestService::isTestDuplicate($test_type_id, $specimen->id)){
+                    if(LabTestService::isTestDuplicate($test_type_id, $specimen)){
                         $orders[] = LabTestService::createTest(
-                            $visit->id, $user, $test_type_id, $specimen->id, $status, null, $physician
+                            $visit, $user, $test_type_id, $specimen, $status, null, $physician
                         ); 
                     } 
                 }
