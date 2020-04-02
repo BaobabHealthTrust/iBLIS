@@ -1,7 +1,7 @@
 <?php 
 
 class VisitService {
-    protected static function createVisit($patient, $visity_type, $ward)
+    public static function createVisit($patient, $visity_type, $ward)
     {
         $visit = new Visit;
         $visit->patient_id = $patient;

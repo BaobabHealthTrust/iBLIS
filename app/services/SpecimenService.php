@@ -1,7 +1,7 @@
 <?php
 
 class SpecimenService {
-    protected static function createSpecimen($specimen_type, $user, $tracking_number)
+    public static function createSpecimen($specimen_type, $user, $tracking_number)
     {
         $specimen = new Specimen;
         $specimen->specimen_type_id = $specimen_type;
