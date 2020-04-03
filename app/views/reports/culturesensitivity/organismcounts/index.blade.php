@@ -84,11 +84,7 @@
 			 				   {{ Form::button("<span class='glyphicon glyphicon-export'></span> ".trans('messages.csv'), 
 			    			    array('class' => 'btn btn-success', 'id' => 'export', 'type' => 'button', 'onclick' => "export()")) }}
 		    				</div> 
-
-							<div class="col-md-1">
-			 				   {{ Form::button("<span class='glyphicon glyphicon-print'></span> ".trans('messages.print'), 
-			    			    array('class' => 'btn btn-success', 'id' => 'filter', 'type' => 'button', 'onclick' => 'getWardsCount()')) }}
-		    				</div> 
+ 
 						</div>
 						
 						<div style="margin-top: 30px;" class="container-fluid col-sm-offset-2 col-sm-8 col-sm-offset-2">

@@ -8,6 +8,8 @@
 	</ol>
 </div>
 <div class='container-fluid'>
+	
+		
 	@if(empty($visit))
     	{{ Form::open(array('url' => 'patientreport/'.$patient->id, 'class' => 'form-inline', 'id' => 'form-patientreport-filter', 'method'=>'POST')) }}
 	@else
@@ -50,6 +52,8 @@
 			            {{ Form::button("<span class='glyphicon glyphicon-filter'></span> ".trans('messages.view'),
 			                    array('class' => 'btn btn-primary', 'id' => 'filter', 'type' => 'submit')) }}
 		            </div>
+
+
 		            @if(count($verified) == count($tests))
 		            <div class="col-sm-1">
 				        {{ Form::button(trans('messages.print'), array('class' => 'btn btn-success',
@@ -191,7 +195,7 @@
 						@if($specimen->specimen_status_id == Specimen::NOT_COLLECTED)
 							<td></td>
 						@elseif($specimen->specimen_status_id == Specimen::ACCEPTED)
-							<td>{{$specimen->acceptedBy->name}}</td>
+							<td>{{$specimen->getUserAcceptedSpecimen($specimen->id)}}</td>
 						@elseif($specimen->specimen_status_id == Specimen::REJECTED)
 							<td>{{$specimen->rejectedBy->name}}</td>
 						@endif

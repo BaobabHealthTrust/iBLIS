@@ -81,6 +81,21 @@ class Specimen extends Eloquent
 		return $this->belongsTo('User', 'accepted_by', 'id');
 	}
 
+	public function getUserAcceptedSpecimen($spec)
+	{
+		$record = DB::select("SELECT name AS user_na FROM  users INNER JOIN specimens ON specimens.accepted_by = users.id WHERE specimens.id ='$spec'");
+		if (COUNT($record) >0 )
+		{
+			
+			return $record[0]->user_na;
+		}
+		else
+		{
+			return "";
+		}
+
+	}
+
 	/**
 	 * User (rejected) relationship
 	 */

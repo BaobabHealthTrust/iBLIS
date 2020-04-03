@@ -439,61 +439,319 @@ P1
 				'art_start_date'  => "",
 				'date_dispatched'  => "",
 				'date_received'  => date('Y-m-d'),
+				'requesting_clinician' => Input::get('physician'),
 				'return_json' => 'true'
 			);
 
-			$data_string = json_encode($json);
-			$ch = curl_init( Config::get('kblis.national-repo-node')."/create_hl7_order");
-			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-					'Content-Type: application/json',
-					'Accept: application/json',
-					'Content-Length: ' . strlen($data_string))
-			);
-			$specimen = null;
-			$response = json_decode(curl_exec($ch));
-			if(is_array($testTypes) && count($testTypes) > 0){
+			if (config::get('kblis.nlims_controller') == true)
+			{
+				$url 	  = config::get('kblis.nlims_controller_ip');			
+				$version  = config::get('kblis.nlims_api_version');
+				$username = config::get('kblis.nlims_custome_username');
+				$password = config::get('kblis.nlims_custome_password');
+				$token = File::get(public_path().'/token.txt');
 
-				// Create Specimen - specimen_type_id, accepted_by, referred_from, referred_to
-				$specimen = new Specimen;
-				$specimen->specimen_type_id = Input::get('specimen_type');
-				$specimen->accepted_by = Auth::user()->id;
-				$specimen->tracking_number = $response->tracking_number;
-				$specimen->accession_number = Specimen::assignAccessionNumber();
-				$specimen->save();
 
-				foreach ($testTypes as $value) {
-					$testTypeID = (int)$value;
+				$ch = curl_init($url.'/api/'.$version.'/'.'check_token_validity/'.$token);
+				curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+							'Content-Type: application/json',
+							'Accept: application/json',
+							'Content-Length: ' . 0)
+				);
 
-					if ($testTypeID == 0){
-						$panelType = PanelType::where('name', '=', $value)->first()->id;
+				$response = json_decode(curl_exec($ch));
+							
+				if ($response->error == false){
 
-						$panelTests = DB::select("SELECT test_type_id FROM panels
-											WHERE panel_type_id = $panelType"
-										);
+					$data_string = json_encode($json);
+					$ch = curl_init($url.'/api/'.$version.'/'.'create_order/'.$token);
+					curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+					curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+					curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+							'Content-Type: application/json',
+							'Accept: application/json',
+							'Content-Length: ' . strlen($data_string))
+					);
 
-						if(count($panelTests) > 0) {
+					$response = json_decode(curl_exec($ch));
 
-							$panel = new TestPanel;
-							$panel->panel_type_id = $panelType;
-							$panel->save();
+					if ($response->error == false)
+					{
+							if(is_array($testTypes) && count($testTypes) > 0){
 
-							foreach ($panelTests AS $tType) {
+							// Create Specimen - specimen_type_id, accepted_by, referred_from, referred_to
+							$specimen = new Specimen;
+							$specimen->specimen_type_id = Input::get('specimen_type');
+							$specimen->accepted_by = Auth::user()->id;
+							$specimen->tracking_number = $response->data->tracking_number;
+							$specimen->accession_number = Specimen::assignAccessionNumber();
+							$specimen->save();
+
+							foreach ($testTypes as $value) {
+								$testTypeID = (int)$value;
+
+								if ($testTypeID == 0){
+									$panelType = PanelType::where('name', '=', $value)->first()->id;
+
+									$panelTests = DB::select("SELECT test_type_id FROM panels
+														WHERE panel_type_id = $panelType"
+													);
+
+									if(count($panelTests) > 0) {
+
+										$panel = new TestPanel;
+										$panel->panel_type_id = $panelType;
+										$panel->save();
+
+										foreach ($panelTests AS $tType) {
+
+											$duplicateCheck = DB::select("SELECT * FROM tests
+														WHERE test_type_id = ".$tType->test_type_id
+												." AND specimen_id = ".$specimen->id);
+
+											if(count($duplicateCheck) == 0) {
+												$test = new Test;
+												$test->visit_id = $visit->id;
+												$test->test_type_id = $tType->test_type_id;
+												$test->specimen_id = $specimen->id;
+												$test->test_status_id = Test::PENDING;
+												$test->created_by = Auth::user()->id;
+												$test->panel_id = $panel->id;
+												$test->requested_by = Input::get('physician');
+												$test->save();
+
+												$activeTest[] = $test->id;
+											}
+										}
+									}
+
+								}else {
+
+									$duplicateCheck = DB::select("SELECT * FROM tests
+														WHERE test_type_id = $testTypeID AND specimen_id = ".$specimen->id);
+
+									if(count($duplicateCheck) == 0) {
+										$test = new Test;
+										$test->visit_id = $visit->id;
+										$test->test_type_id = $testTypeID;
+										$test->specimen_id = $specimen->id;
+										$test->test_status_id = Test::PENDING;
+										$test->created_by = Auth::user()->id;
+										$test->requested_by = Input::get('physician');
+										$test->save();
+
+										$activeTest[] = $test->id;
+									}
+								}
+							}
+						}
+						Sender::send_data($patient, Specimen::find($specimen->id));
+					}				
+					else
+					{
+						return Redirect::route('test.create', 
+						array(Input::get('patient_id')))->withInput()->withErrors("national_lims:  " .$response->message);
+					}
+				}
+				else
+				{
+					$data_string = json_encode($json);
+					$ch = curl_init($url.'/api/'.$version.'/'.'re_authenticate/'.$username."/".$password);
+					curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+					curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+							'Content-Type: application/json',
+							'Accept: application/json',
+							'Content-Length: ' . 0)
+					);
+
+					$response = json_decode(curl_exec($ch));
+					if ($response->error == false){
+						$token = $response->data->token;
+
+						File::put(public_path()."/token.txt", $token);
+						
+							$data_string = json_encode($json);
+							$ch = curl_init($url.'/api/'.$version.'/'.'create_order/'.$token);
+							curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+							curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+							curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+							curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+									'Content-Type: application/json',
+									'Accept: application/json',
+									'Content-Length: ' . strlen($data_string))
+							);
+
+							$response = json_decode(curl_exec($ch));
+
+							if ($response->error == false)
+							{
+									if(is_array($testTypes) && count($testTypes) > 0){
+
+									// Create Specimen - specimen_type_id, accepted_by, referred_from, referred_to
+									$specimen = new Specimen;
+									$specimen->specimen_type_id = Input::get('specimen_type');
+									$specimen->accepted_by = Auth::user()->id;
+									$specimen->tracking_number = $response->data->tracking_number;
+									$specimen->accession_number = Specimen::assignAccessionNumber();
+									$specimen->save();
+
+									foreach ($testTypes as $value) {
+										$testTypeID = (int)$value;
+
+										if ($testTypeID == 0){
+											$panelType = PanelType::where('name', '=', $value)->first()->id;
+
+											$panelTests = DB::select("SELECT test_type_id FROM panels
+																WHERE panel_type_id = $panelType"
+															);
+
+											if(count($panelTests) > 0) {
+
+												$panel = new TestPanel;
+												$panel->panel_type_id = $panelType;
+												$panel->save();
+
+												foreach ($panelTests AS $tType) {
+
+													$duplicateCheck = DB::select("SELECT * FROM tests
+																WHERE test_type_id = ".$tType->test_type_id
+														." AND specimen_id = ".$specimen->id);
+
+													if(count($duplicateCheck) == 0) {
+														$test = new Test;
+														$test->visit_id = $visit->id;
+														$test->test_type_id = $tType->test_type_id;
+														$test->specimen_id = $specimen->id;
+														$test->test_status_id = Test::PENDING;
+														$test->created_by = Auth::user()->id;
+														$test->panel_id = $panel->id;
+														$test->requested_by = Input::get('physician');
+														$test->save();
+
+														$activeTest[] = $test->id;
+													}
+												}
+											}
+
+										}else {
+
+											$duplicateCheck = DB::select("SELECT * FROM tests
+																WHERE test_type_id = $testTypeID AND specimen_id = ".$specimen->id);
+
+											if(count($duplicateCheck) == 0) {
+												$test = new Test;
+												$test->visit_id = $visit->id;
+												$test->test_type_id = $testTypeID;
+												$test->specimen_id = $specimen->id;
+												$test->test_status_id = Test::PENDING;
+												$test->created_by = Auth::user()->id;
+												$test->requested_by = Input::get('physician');
+												$test->save();
+
+												$activeTest[] = $test->id;
+											}
+										}
+									}
+								}
+								Sender::send_data($patient, Specimen::find($specimen->id));
+							}
+							else
+							{
+								return Redirect::route('test.create', 
+								array(Input::get('patient_id')))->withInput()->withErrors("national_lims:  " .$response->message);
+							}
+
+
+					}
+					else
+					{ 
+						return Redirect::route('test.create', 
+						array(Input::get('patient_id')))->withInput()->withErrors("national_lims:  " .$response->message);
+					}
+							
+
+				}					
+
+
+			}
+
+			else{
+					$dataerror = json_encode($json);
+					$ch = curl_init( Config::get('kblis.national-repo-node')."/create_hl7_order");
+					curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+					curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+					curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+							'Content-Type: application/json',
+							'Accept: application/json',
+							'Content-Length: ' . strlen($data_string))
+					);
+					$specimen = null;
+					$response = json_decode(curl_exec($ch));
+					if(is_array($testTypes) && count($testTypes) > 0){
+
+						// Create Specimen - specimen_type_id, accepted_by, referred_from, referred_to
+						$specimen = new Specimen;
+						$specimen->specimen_type_id = Input::get('specimen_type');
+						$specimen->accepted_by = Auth::user()->id;
+						$specimen->tracking_number = $response->tracking_number;
+						$specimen->accession_number = Specimen::assignAccessionNumber();
+						$specimen->save();
+
+						foreach ($testTypes as $value) {
+							$testTypeID = (int)$value;
+
+							if ($testTypeID == 0){
+								$panelType = PanelType::where('name', '=', $value)->first()->id;
+
+								$panelTests = DB::select("SELECT test_type_id FROM panels
+													WHERE panel_type_id = $panelType"
+												);
+
+								if(count($panelTests) > 0) {
+
+									$panel = new TestPanel;
+									$panel->panel_type_id = $panelType;
+									$panel->save();
+
+									foreach ($panelTests AS $tType) {
+
+										$duplicateCheck = DB::select("SELECT * FROM tests
+													WHERE test_type_id = ".$tType->test_type_id
+											." AND specimen_id = ".$specimen->id);
+
+										if(count($duplicateCheck) == 0) {
+											$test = new Test;
+											$test->visit_id = $visit->id;
+											$test->test_type_id = $tType->test_type_id;
+											$test->specimen_id = $specimen->id;
+											$test->test_status_id = Test::PENDING;
+											$test->created_by = Auth::user()->id;
+											$test->panel_id = $panel->id;
+											$test->requested_by = Input::get('physician');
+											$test->save();
+
+											$activeTest[] = $test->id;
+										}
+									}
+								}
+
+							}else {
 
 								$duplicateCheck = DB::select("SELECT * FROM tests
-											WHERE test_type_id = ".$tType->test_type_id
-									." AND specimen_id = ".$specimen->id);
+													WHERE test_type_id = $testTypeID AND specimen_id = ".$specimen->id);
 
 								if(count($duplicateCheck) == 0) {
 									$test = new Test;
 									$test->visit_id = $visit->id;
-									$test->test_type_id = $tType->test_type_id;
+									$test->test_type_id = $testTypeID;
 									$test->specimen_id = $specimen->id;
 									$test->test_status_id = Test::PENDING;
 									$test->created_by = Auth::user()->id;
-									$test->panel_id = $panel->id;
 									$test->requested_by = Input::get('physician');
 									$test->save();
 
@@ -501,29 +759,12 @@ P1
 								}
 							}
 						}
-
-					}else {
-
-						$duplicateCheck = DB::select("SELECT * FROM tests
-											WHERE test_type_id = $testTypeID AND specimen_id = ".$specimen->id);
-
-						if(count($duplicateCheck) == 0) {
-							$test = new Test;
-							$test->visit_id = $visit->id;
-							$test->test_type_id = $testTypeID;
-							$test->specimen_id = $specimen->id;
-							$test->test_status_id = Test::PENDING;
-							$test->created_by = Auth::user()->id;
-							$test->requested_by = Input::get('physician');
-							$test->save();
-
-							$activeTest[] = $test->id;
-						}
 					}
-				}
-			}
 
-			Sender::send_data($patient, Specimen::find($specimen->id));
+				Sender::send_data($patient, Specimen::find($specimen->id));
+			}
+			
+			
 			$url = Session::get('SOURCE_URL');
 
 			return Redirect::to($url)->with('message', 'messages.success-creating-test')
@@ -546,6 +787,7 @@ P1
 		$visit = $specimen->test->visit;
 		$patient = $visit->patient;
 		$specimen_type =  $specimen->specimen_type;
+		$tracking_number = $specimen->tracking_number;
 		$activeTest = [];
 		// process the login
 		if ($validator->fails()) {
@@ -580,91 +822,224 @@ P1
 			//	array(Input::get('patient_id')))->withInput()->withErrors($validator);
 		} else {
 
-			$testTypes = Input::get('testtypes');
-			if(is_array($testTypes) && count($testTypes) > 0){
+			if (config::get('kblis.nlims_controller') == true)
+			{
+					$url 	  = config::get('kblis.nlims_controller_ip');			
+					$version  = config::get('kblis.nlims_api_version');
+					$username = config::get('kblis.nlims_custome_username');
+					$password = config::get('kblis.nlims_custome_password');
+					$token = File::get(public_path().'/token.txt');
 
-				// Get Specimen - specimen_type_id, accepted_by, referred_from, referred_to
-				foreach ($testTypes as $value) {
-					$testTypeID = (int)$value;
-					if ($testTypeID == 0){
-						$panelType = PanelType::where('name', '=', $value)->first()->id;
 
-						$panelTests = DB::select("SELECT test_type_id FROM panels
-											WHERE panel_type_id = $panelType"
+					$ch = curl_init($url.'/api/'.$version.'/'.'check_token_validity/'.$token);
+					curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+					curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+					curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+								'Content-Type: application/json',
+								'Accept: application/json',
+								'Content-Length: ' . 0)
+					);
+
+					$response = json_decode(curl_exec($ch));
+				
+					if ($response->error == false){
+						$data_string = json_encode($json);
+						$ch = curl_init($url.'/api/'.$version.'/'.'create_order/'.$token);
+						curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+						curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+						curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+								'Content-Type: application/json',
+								'Accept: application/json',
+								'Content-Length: ' . strlen($data_string))
 						);
 
-						if(count($panelTests) > 0) {
+						$response = json_decode(curl_exec($ch));
 
-							$panel = new TestPanel;
-							$panel->panel_type_id = $panelType;
-							$panel->save();
-
-							foreach ($panelTests AS $tType) {
-
-								$countduplicates;
-								$testype_name = TestType::find($testTypeID)->name;
-								if($testype_name == 'Cross-match')
-								{
-									$countduplicates = 0;
-								}
-								else
-								{
-									$duplicateCheck = DB::select("SELECT * FROM tests
-											WHERE test_type_id = ".$tType->test_type_id
-									." AND specimen_id = ".$specimen->id);
-									$countduplicates = count($duplicateCheck);
-								}
-
-								if($countduplicates == 0) {
-									$test = new Test;
-									$test->visit_id = $visit->id;
-									$test->test_type_id = $tType->test_type_id;
-									$test->specimen_id = $specimen->id;
-									$test->test_status_id = Test::PENDING;
-									$test->created_by = Auth::user()->id;
-									$test->panel_id = $panel->id;
-									$test->requested_by = Input::get('physician');
-									$test->save();
-
-									$activeTest[] = $test->id;
-								}
-							}
-						}
-
-					}else {
-
-						$countduplicates;
-						$testype_name = TestType::find($testTypeID)->name;
-						if($testype_name == 'Cross-match')
+						if ($response->error == false)
 						{
-							$countduplicates = 0;
-						}
+								$testTypes = Input::get('testtypes');
+								if(is_array($testTypes) && count($testTypes) > 0){
+
+									// Get Specimen - specimen_type_id, accepted_by, referred_from, referred_to
+									foreach ($testTypes as $value) {
+										$testTypeID = (int)$value;
+										if ($testTypeID == 0){
+											$panelType = PanelType::where('name', '=', $value)->first()->id;
+
+											$panelTests = DB::select("SELECT test_type_id FROM panels
+																WHERE panel_type_id = $panelType"
+											);
+
+											if(count($panelTests) > 0) {
+
+												$panel = new TestPanel;
+												$panel->panel_type_id = $panelType;
+												$panel->save();
+
+												foreach ($panelTests AS $tType) {
+
+													$countduplicates;
+													$testype_name = TestType::find($testTypeID)->name;
+													if($testype_name == 'Cross-match')
+													{
+														$countduplicates = 0;
+													}
+													else
+													{
+														$duplicateCheck = DB::select("SELECT * FROM tests
+																WHERE test_type_id = ".$tType->test_type_id
+														." AND specimen_id = ".$specimen->id);
+														$countduplicates = count($duplicateCheck);
+													}
+
+													if($countduplicates == 0) {
+														$test = new Test;
+														$test->visit_id = $visit->id;
+														$test->test_type_id = $tType->test_type_id;
+														$test->specimen_id = $specimen->id;
+														$test->test_status_id = Test::PENDING;
+														$test->created_by = Auth::user()->id;
+														$test->panel_id = $panel->id;
+														$test->requested_by = Input::get('physician');
+														$test->save();
+
+														$activeTest[] = $test->id;
+													}
+												}
+											}
+
+										}else {
+
+											$countduplicates;
+											$testype_name = TestType::find($testTypeID)->name;
+											if($testype_name == 'Cross-match')
+											{
+												$countduplicates = 0;
+											}
+											else
+											{
+												$duplicateCheck = DB::select("SELECT * FROM tests
+																WHERE test_type_id = $testTypeID AND specimen_id = ".$specimen->id);
+												$countduplicates = count($duplicateCheck);
+											}
+
+											if($countduplicates == 0) {
+												$test = new Test;
+												$test->visit_id = $visit->id;
+												$test->test_type_id = $testTypeID;
+												$test->specimen_id = $specimen->id;
+												$test->test_status_id = Test::PENDING;
+												$test->created_by = Auth::user()->id;
+												$test->requested_by = Input::get('physician');
+												$test->save();
+
+												$activeTest[] = $test->id;
+											}
+										}
+									}
+								}
+								$url = Session::get('SOURCE_URL');
+
+								return Redirect::to($url)->with('message', 'messages.success-creating-test')
+									->with('activeTest', $activeTest);
+						}				
 						else
 						{
-							$duplicateCheck = DB::select("SELECT * FROM tests
-											WHERE test_type_id = $testTypeID AND specimen_id = ".$specimen->id);
-							$countduplicates = count($duplicateCheck);
+							
 						}
+					}
+					
 
-						if($countduplicates == 0) {
-							$test = new Test;
-							$test->visit_id = $visit->id;
-							$test->test_type_id = $testTypeID;
-							$test->specimen_id = $specimen->id;
-							$test->test_status_id = Test::PENDING;
-							$test->created_by = Auth::user()->id;
-							$test->requested_by = Input::get('physician');
-							$test->save();
 
-							$activeTest[] = $test->id;
+			}
+			else {
+				$testTypes = Input::get('testtypes');
+				if(is_array($testTypes) && count($testTypes) > 0){
+
+					// Get Specimen - specimen_type_id, accepted_by, referred_from, referred_to
+					foreach ($testTypes as $value) {
+						$testTypeID = (int)$value;
+						if ($testTypeID == 0){
+							$panelType = PanelType::where('name', '=', $value)->first()->id;
+
+							$panelTests = DB::select("SELECT test_type_id FROM panels
+												WHERE panel_type_id = $panelType"
+							);
+
+							if(count($panelTests) > 0) {
+
+								$panel = new TestPanel;
+								$panel->panel_type_id = $panelType;
+								$panel->save();
+
+								foreach ($panelTests AS $tType) {
+
+									$countduplicates;
+									$testype_name = TestType::find($testTypeID)->name;
+									if($testype_name == 'Cross-match')
+									{
+										$countduplicates = 0;
+									}
+									else
+									{
+										$duplicateCheck = DB::select("SELECT * FROM tests
+												WHERE test_type_id = ".$tType->test_type_id
+										." AND specimen_id = ".$specimen->id);
+										$countduplicates = count($duplicateCheck);
+									}
+
+									if($countduplicates == 0) {
+										$test = new Test;
+										$test->visit_id = $visit->id;
+										$test->test_type_id = $tType->test_type_id;
+										$test->specimen_id = $specimen->id;
+										$test->test_status_id = Test::PENDING;
+										$test->created_by = Auth::user()->id;
+										$test->panel_id = $panel->id;
+										$test->requested_by = Input::get('physician');
+										$test->save();
+
+										$activeTest[] = $test->id;
+									}
+								}
+							}
+
+						}else {
+
+							$countduplicates;
+							$testype_name = TestType::find($testTypeID)->name;
+							if($testype_name == 'Cross-match')
+							{
+								$countduplicates = 0;
+							}
+							else
+							{
+								$duplicateCheck = DB::select("SELECT * FROM tests
+												WHERE test_type_id = $testTypeID AND specimen_id = ".$specimen->id);
+								$countduplicates = count($duplicateCheck);
+							}
+
+							if($countduplicates == 0) {
+								$test = new Test;
+								$test->visit_id = $visit->id;
+								$test->test_type_id = $testTypeID;
+								$test->specimen_id = $specimen->id;
+								$test->test_status_id = Test::PENDING;
+								$test->created_by = Auth::user()->id;
+								$test->requested_by = Input::get('physician');
+								$test->save();
+
+								$activeTest[] = $test->id;
+							}
 						}
 					}
 				}
-			}
-			$url = Session::get('SOURCE_URL');
+				$url = Session::get('SOURCE_URL');
 
-			return Redirect::to($url)->with('message', 'messages.success-creating-test')
-				->with('activeTest', $activeTest);
+				return Redirect::to($url)->with('message', 'messages.success-creating-test')
+					->with('activeTest', $activeTest);
+			}
 		}
 	}
 

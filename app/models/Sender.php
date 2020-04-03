@@ -51,54 +51,114 @@ class Sender
             'results' => array()
         );
 
-        if(sizeof($tests) == 0){
-            $tests = Test::where('specimen_id', $specimen->id)->get();
-        }
+        if (Config::get('kblis.nlims_controller') == true)
+        {       $tracking_number = $order['_id'];
+                $url      = config::get('kblis.nlims_controller_ip');           
+                $version  = config::get('kblis.nlims_api_version');
+                $username = config::get('kblis.nlims_custome_username');
+                $password = config::get('kblis.nlims_custome_password');
+                $token = File::get(public_path().'/token.txt');
 
-        foreach($tests AS $test){
-
-            $test_name = $test->testType->name;
-            $order['results'][$test_name] = array();
-            $h = array();
-            $h['test_status'] = $test->testStatus->name;
-            $h['remarks'] = $test->interpretation;
-            $h['datetime_started'] = $test->time_started;
-            $h['datetime_completed'] = $test->time_completed;
-
-            $h['who_updated'] = array();
-            $who = Auth::user();
-            $name = explode(' ', $who->name);
-            $h['who_updated']['first_name'] = isset($name[0]) ? $name[0]  : '';
-            $h['who_updated']['last_name'] = isset($name[1]) ? $name[1]  : '';
-            $h['who_updated']['ID_number'] = $who->id;
-
-            $r = array();
-            foreach ($test->testResults AS $result){
-                $measure = Measure::find($result->measure_id);
-                if($result->result) {
-                    $r[$measure->name] = $result->result . " " . $measure->unit;
-                }else{
-                    $r[$measure->name] = $result->result;
+                if(sizeof($tests) == 0){
+                    $tests = Test::where('specimen_id', $specimen->id)->get();
                 }
-            }
-            $h['results'] = $r;
-            $order['results'][$test_name] = $h;
+                $details = array();
+                $results = array();
+                foreach($tests AS $test){
+                        $details['tracking_number'] = $tracking_number;
+                        $test_name = $test->testType->name;                         
+                        $who = Auth::user();
+                        $name = explode(' ', $who->name);
+               
+                        $details['test_name'] = $test_name;
+                        $details['test_status'] = $test->testStatus->name;
+                        $details['time_update'] = '';
+
+                        $updater = array(
+                          'first_name' => isset($name[0]) ? $name[0]  : '',
+                          'last_name' => isset($name[1]) ? $name[1]  : '',
+                          'id_number' => $who->id);                        
+                        $details['who_updated'] = $updater;
+
+                        foreach ($test->testResults AS $result){
+                            $measure = Measure::find($result->measure_id);
+                            if($result->result) {
+                                $results[$measure->name] =  $result->result . " " . $measure->unit;                 
+                            }else{
+                                $results[$measure->name] =  $result->result;
+                            }
+                        }
+
+                        $details['results'] = $results;
+
+                }
+
+                    $data_string = json_encode($details);
+                    $ch = curl_init($url.'/api/'.$version.'/'.'update_test/'.$token);
+                    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                            'Content-Type: application/json',
+                            'Accept: application/json',
+                            'Content-Length: ' . strlen($data_string))
+                    );
+
+                    $response = json_decode(curl_exec($ch));
         }
+        else {
 
-        #$order =  urldecode(http_build_query($order));
-        #dd($order);
-        $data_string = json_encode($order);
 
-        $ch = curl_init( Config::get('kblis.central-repo')."/pass_json/");
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($data_string))
-        );
+            if(sizeof($tests) == 0){
+                $tests = Test::where('specimen_id', $specimen->id)->get();
+            }
 
-        curl_exec($ch);
+            foreach($tests AS $test){
+
+                $test_name = $test->testType->name;
+                $order['results'][$test_name] = array();
+                $h = array();
+                $h['test_status'] = $test->testStatus->name;
+                $h['remarks'] = $test->interpretation;
+                $h['datetime_started'] = $test->time_started;
+                $h['datetime_completed'] = $test->time_completed;
+
+                $h['who_updated'] = array();
+                $who = Auth::user();
+                $name = explode(' ', $who->name);
+                $h['who_updated']['first_name'] = isset($name[0]) ? $name[0]  : '';
+                $h['who_updated']['last_name'] = isset($name[1]) ? $name[1]  : '';
+                $h['who_updated']['ID_number'] = $who->id;
+
+                $r = array();
+                foreach ($test->testResults AS $result){
+                    $measure = Measure::find($result->measure_id);
+                    if($result->result) {
+                        $r[$measure->name] = $result->result . " " . $measure->unit;
+                    }else{
+                        $r[$measure->name] = $result->result;
+                    }
+                }
+                $h['results'] = $r;
+                $order['results'][$test_name] = $h;
+            }
+
+            #$order =  urldecode(http_build_query($order));
+            #dd($order);
+            $data_string = json_encode($order);
+
+            $ch = curl_init( Config::get('kblis.central-repo')."/pass_json/");
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                    'Content-Type: application/json',
+                    'Content-Length: ' . strlen($data_string))
+            );
+
+            $response = json_decode(curl_exec($ch));
+          
+        }
 
     }
 

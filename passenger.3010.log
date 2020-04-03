@@ -1,0 +1,33 @@
+[ 2017-10-31 08:32:14.1766 6083/7f94c97ec740 age/Wat/WatchdogMain.cpp:1283 ]: Starting Passenger watchdog...
+[ 2017-10-31 08:32:14.2121 6086/7f00e555f740 age/Cor/CoreMain.cpp:1083 ]: Starting Passenger core...
+[ 2017-10-31 08:32:14.2212 6086/7f00e555f740 age/Cor/CoreMain.cpp:248 ]: Passenger core running in multi-application mode.
+[ 2017-10-31 08:32:14.2624 6086/7f00e555f740 age/Cor/CoreMain.cpp:830 ]: Passenger core online, PID 6086
+[ 2017-10-31 08:32:14.2735 6094/7f4239a49740 age/Ust/UstRouterMain.cpp:537 ]: Starting Passenger UstRouter...
+[ 2017-10-31 08:32:14.2751 6094/7f4239a49740 age/Ust/UstRouterMain.cpp:350 ]: Passenger UstRouter online, PID 6094
+2017/10/31 08:32:16 [error] 6115#0: *4 directory index of "/var/www/html/iBLIS/public/" is forbidden, client: 127.0.0.1, server: _, request: "HEAD / HTTP/1.1", host: "0.0.0.0"
+[ 2017-10-31 08:32:22.0930 6086/7f00dfbe1700 age/Cor/SecurityUpdateChecker.h:376 ]: A security update is available for your version (5.1.7) of Passenger, we strongly recommend upgrading to version 5.1.11.
+[ 2017-10-31 08:32:22.0931 6086/7f00dfbe1700 age/Cor/SecurityUpdateChecker.h:381 ]:  Additional information: 
+- [Fixed in 5.1.11] [URGENT] Users with write access to an application can view arbitrary files on the system if Passenger is running as root.
+2017/10/31 08:32:37 [error] 6115#0: *5 directory index of "/var/www/html/iBLIS/public/" is forbidden, client: 127.0.0.1, server: _, request: "GET / HTTP/1.1", host: "localhost:3010"
+2017/10/31 08:33:43 [error] 6115#0: *7 directory index of "/var/www/html/iBLIS/public/" is forbidden, client: 127.0.0.1, server: _, request: "GET / HTTP/1.1", host: "localhost:3010"
+
+
+[ 2017-10-31 08:35:01.0737 6086/7f00df35f700 age/Cor/CoreMain.cpp:588 ]: Signal received. Gracefully shutting down... (send signal 2 more time(s) to force shutdown)
+[ 2017-10-31 08:35:01.0737 6094/7f4233fff700 age/Ust/UstRouterMain.cpp:430 ]: Signal received. Gracefully shutting down... (send signal 2 more time(s) to force shutdown)
+[ 2017-10-31 08:35:01.0738 6086/7f00e555f740 age/Cor/CoreMain.cpp:1002 ]: Received command to shutdown gracefully. Waiting until all clients have disconnected...
+[ 2017-10-31 08:35:01.0738 6094/7f4239a49740 age/Ust/UstRouterMain.cpp:500 ]: Received command to shutdown gracefully. Waiting until all clients have disconnected...
+[ 2017-10-31 08:35:01.0738 6094/7f42337fe700 Ser/Server.h:862 ]: [UstRouterApiServer] Freed 0 spare client objects
+[ 2017-10-31 08:35:01.0739 6094/7f42337fe700 Ser/Server.h:490 ]: [UstRouterApiServer] Shutdown finished
+[ 2017-10-31 08:35:01.0739 6086/7f00de25b700 Ser/Server.h:862 ]: [ServerThr.3] Freed 0 spare client objects
+[ 2017-10-31 08:35:01.0739 6086/7f00de25b700 Ser/Server.h:490 ]: [ServerThr.3] Shutdown finished
+[ 2017-10-31 08:35:01.0739 6094/7f4233fff700 Ser/Server.h:490 ]: [UstRouter] Shutdown finished
+[ 2017-10-31 08:35:01.0740 6086/7f00dd9d9700 Ser/Server.h:862 ]: [ServerThr.4] Freed 0 spare client objects
+[ 2017-10-31 08:35:01.0740 6086/7f00dd9d9700 Ser/Server.h:490 ]: [ServerThr.4] Shutdown finished
+[ 2017-10-31 08:35:01.0741 6086/7f00df35f700 Ser/Server.h:862 ]: [ServerThr.1] Freed 0 spare client objects
+[ 2017-10-31 08:35:01.0741 6086/7f00df35f700 Ser/Server.h:490 ]: [ServerThr.1] Shutdown finished
+[ 2017-10-31 08:35:01.0741 6086/7f00deadd700 Ser/Server.h:862 ]: [ServerThr.2] Freed 0 spare client objects
+[ 2017-10-31 08:35:01.0741 6086/7f00deadd700 Ser/Server.h:490 ]: [ServerThr.2] Shutdown finished
+[ 2017-10-31 08:35:01.0742 6086/7f00dd157700 Ser/Server.h:862 ]: [ApiServer] Freed 0 spare client objects
+[ 2017-10-31 08:35:01.0742 6086/7f00dd157700 Ser/Server.h:490 ]: [ApiServer] Shutdown finished
+[ 2017-10-31 08:35:01.0746 6094/7f4239a49740 age/Ust/UstRouterMain.cpp:531 ]: Passenger UstRouter shutdown finished
+[ 2017-10-31 08:35:01.1370 6086/7f00e555f740 age/Cor/CoreMain.cpp:1068 ]: Passenger core shutdown finished
