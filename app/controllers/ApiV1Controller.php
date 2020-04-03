@@ -91,4 +91,50 @@ class ApiV1Controller extends \BaseController {
 			'data' => $data
 		), $code);
 	}
+
+	public function getUserRoles()
+	{
+		$roles = Role::all();
+		$error = false;
+		$code = 200;
+		$data = [];
+		if ($roles){
+			$data = $roles;
+		}else{
+			$code = 404;
+			$error = true;
+		}
+		return Response::json(array (
+			'error'=> $error, 
+			'data' => $data 
+		), $code);
+	}
+
+	public function createUser()
+	{
+		$error = false;
+		$code = 201;
+		$data = [];
+		$user = new User;
+		$user->username = Request::get('username');
+        $user->name = Request::get('full_name');
+        $user->gender = Request::get('gender');
+        $user->designation = Request::get('designation');
+        $user->email = Request::get('email');
+		$user->password = Hash::make(Request::get('password'));
+		
+		if($user->save()){
+			$data = $user;
+		}else{
+			$error = true;
+			$code = 401;
+			$data = [];
+		}
+
+		return Response::json(array (
+			'error'=> $error, 
+			'user' => $data 
+		), $code);
+	}
+
 }

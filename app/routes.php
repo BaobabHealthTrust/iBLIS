@@ -23,6 +23,8 @@ Route::group(array('prefix' => 'api/v1'), function(){
     Route::resource('visits', 'ApiV1Controller@getVisitTypes');
     Route::resource('order', 'ApiV1Controller@placeTestOrder');
     Route::resource('results', 'ApiV1Controller@getTestResults');
+    Route::resource('user_roles', 'ApiV1Controller@getUserRoles');
+    Route::resource('create_user', 'ApiV1Controller@createUser');
 });
 
 /* Routes accessible before logging in */
