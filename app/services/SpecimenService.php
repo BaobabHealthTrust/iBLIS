@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
+
 class SpecimenService {
     public static function createSpecimen($specimen_type, $user, $tracking_number)
     {
@@ -12,6 +14,33 @@ class SpecimenService {
         return $specimen;
     }
 
+    public static function mapTestToSpecimenType($test_type_id, $specimen_type){
+
+		return DB::table('testtype_specimentypes')->insert(array (
+            'test_type_id' => $test_type_id, 'specimen_type_id' => $specimen_type
+            ));
+    }
+    
+    public static function getSpecimenTypeByName($specimen_name)
+    {
+        $specimen_type = DB::table('specimen_types')->where('name', $specimen_name)->first();
+        return $specimen_type ? $specimen_type : SpecimenService::createSpecimenType($specimen_name, null);
+    }
+
+    public static function createSpecimenType($name, $description) 
+    {
+        $rules = array('name' => 'required|unique:specimen_types,name');
+		$validator = Validator::make(['name' => $name], $rules);
+
+		if (!$validator->fails()) {
+			$specimentype = new SpecimenType;
+			$specimentype->name = $name;
+			$specimentype->description = $description;
+            $specimentype->save();
+			return $specimentype;
+        } 
+    }
+    
     public static function getSpecimens()
 	{
 		$specimentypes = SpecimenType::select('id as specimen_id', 'name')->get();

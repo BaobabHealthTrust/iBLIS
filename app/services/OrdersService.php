@@ -17,36 +17,23 @@ class OrdersService {
         return $validator->fails() ? $validator->errors() : [];
     }
 
-    public static function order($accession_number, $user, $visit, $test_types, $specimen, $status, $physician){
+    public static function order($accession_number, $user, $visit, $test_types, 
+        $test_category, $specimen, $status, $physician){
         $orders = [];
-        if(is_array($test_types) && count($test_types) > 0){
-            foreach ($test_types as $test_type) { 
-                $test_type_id = (int) $test_type;
-                if ($test_type_id == 0)
-                {
-                    $panel_type = LabTestService::getPanelType($test_type);
-                    $panel_tests = LabTestService::getPanelTests($panel_type);
-                    if(count($panel_tests) > 0) {
-                        $panel = LabTestService::createPanel($panel_type);
-                        foreach ($panel_tests AS $t_type) { 
-                            if(LabTestService::isTestDuplicate($t_type->test_type_id, $specimen)){
-                               $orders[] = LabTestService::createTest(
-                                    $accession_number, $visit, $user, $t_type->test_type_id, $specimen, $status, $panel,$physician
-                                );
-                            }
-                        }
-                    }
-                }else{
-                    if(LabTestService::isTestDuplicate($test_type_id, $specimen)){
-                        $orders[] = LabTestService::createTest(
-                            $accession_number, $visit, $user, $test_type_id, $specimen, $status, null, $physician
-                        ); 
-                    } 
-                }
-            }
+        foreach ($test_types as $test_type) { 
+            $test_category_id = LabTestService::getTestCategory($test_category)->id;
+            $test_type_id = LabTestService::getTestType($test_type, $specimen->specimen_type_id, $test_category_id)->id;
+            $orders[] = LabTestService::createTest(
+                $accession_number, 
+                $visit,
+                $user, 
+                $test_type_id, 
+                $specimen->id, 
+                $status, 
+                null, 
+                $physician
+            );
         }
         return $orders;
     }
-
-
 }

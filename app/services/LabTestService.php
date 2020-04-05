@@ -1,6 +1,34 @@
 <?php
 
 class LabTestService {
+    
+    public static function getTestType($test_name, $specimen_type_id, $test_category)
+    {
+        $test_type = DB::table('test_types')->where('name', $test_name)->first();
+        if (!$test_type){
+            $test_type = LabTestService::createTestType($test_name, $test_category);
+        }
+        $test_specimen_type = DB::select(
+            'SELECT * FROM testtype_specimentypes WHERE 
+            specimen_type_id = '.$specimen_type_id.' AND test_type_id='.$test_type->id
+        );
+        if(!$test_specimen_type){
+            SpecimenService::mapTestToSpecimenType($test_type->id, $specimen_type_id);
+        }
+        return $test_type;
+    }
+    
+    public static function getTestCategory($name, $description='N/A')
+    {
+        $test_cat = DB::table('test_categories')->where('name', $name)->first();
+        return $test_cat ? $test_cat : LabTestService::createTestCategory($name, $description);
+    }
+    
+    public static function getTestByAccessionNumber($accession_number)
+    {
+        return DB::table('tests')->where('accession_number', $accession_number)->first();
+    }
+    
     public static function createTest($accession_number, $visit, $user, $test_type, $specimen, $status, $panel, $physician)
     {
         $test = new Test;
@@ -16,32 +44,33 @@ class LabTestService {
         return $test;
     }
 
-    public static function getTestByAccessionNumber($accession_number)
+    public static function createTestType($name, $test_category)
     {
-        return DB::table('tests')->where('accession_number', $accession_number)->first();
+        $rules = array('name' => 'required|unique:test_types,name');
+        $validator = Validator::make(['name' => $name], $rules);
+        
+        if (!$validator->fails()) {
+            $testtype = new TestType;
+            $testtype->name = trim($name);
+            $testtype->short_name = 'N/A';
+            $testtype->description = 'N/A';
+            $testtype->test_category_id = $test_category;
+            $testtype->save();
+            return $testtype;
+        }
     }
-
-    public static function getPanelType($test_type)
+   
+    public static function createTestCategory($name, $description="N/A")
     {
-        return PanelType::where('name', '=', $test_type)->first()->id;
-    }
-
-    public static function isTestDuplicate($test_type, $specimen)
-    {
-        $duplicateCheck = DB::select("SELECT * FROM tests WHERE test_type_id = ".$test_type." AND specimen_id = ".$specimen);
-        return count($duplicateCheck) === 0;
-    }
-
-    public static function getPanelTests($panelType)
-    {
-        return DB::select("SELECT test_type_id FROM panels WHERE panel_type_id = $panelType");
-    }
-
-    public static function createPanel($panel_type)
-    {
-        $panel = new TestPanel;
-        $panel->panel_type_id = $panel_type;
-        $panel->save();
-        return $panel;
+        $rules = array('name' => 'required|unique:test_categories,name');
+        $validator = Validator::make(['name' => $name], $rules);
+    
+        if(!$validator->fails()){
+            $testcategory = new TestCategory;
+            $testcategory->name = $name;
+            $testcategory->description = $description;
+            $testcategory->save();
+            return $testcategory;
+        }
     }
 }

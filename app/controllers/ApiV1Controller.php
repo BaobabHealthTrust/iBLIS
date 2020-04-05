@@ -45,28 +45,31 @@ class ApiV1Controller extends \BaseController {
 	{
 		$orderValidationErrors = OrdersService::validate(Input::all());
 		$patientValidationErrors = PatientService::validate(Input::get('person'));
-		
+
 		if (count($orderValidationErrors) > 0 or count($patientValidationErrors) > 0) {
-			return Response::json(array (
-				'error' => true, 'data' => ['order' => $orderValidationErrors, 
-				'person'=> $patientValidationErrors]), 
-				400);
+			return Response::json(array ('error' => true, 
+				'data' => ['order' => $orderValidationErrors, 'person'=> $patientValidationErrors]),
+				 400);
 		}
+		
 		$patient = PatientService::getPatient(Input::get('user_id'), Input::get('person'));
-		$specimen = SpecimenService::createSpecimen(
-				Input::get('specimen_type'), Input::get('user_id'), 
-				Input::get('specimen_tracking_number')
-			);
-		$visit = VisitService::createVisit(
-			$patient->id, Input::get('visit_type'), Input::get('ward')
-		);
-		$order = OrdersService::order(
-			Input::get('accession_number'), Input::get('user_id'), $visit->id, Input::get('testtypes'),
-			$specimen->id, Test::PENDING, Input::get('physician')
-		);
+
+		$specimen_type = SpecimenService::getSpecimenTypeByName(Input::get('specimen_type'));
+		
+		$visit_type = VisitService::getVisitTypeByName(Input::get('visit_type'));
+		
+		$specimen = SpecimenService::createSpecimen($specimen_type->id, Input::get('user_id'), 
+			Input::get('specimen_tracking_number'));
+		
+		$visit = VisitService::createVisit($patient->id, $visit_type->id, Input::get('ward'));
+		
+		$order = OrdersService::order(Input::get('accession_number'), Input::get('user_id'), 
+			$visit->id, Input::get('testtypes'), Input::get('test_category'), 
+			$specimen, Test::PENDING, Input::get('physician'));
+
 		$code = 201;
 		$error = false;
-		
+
 		if (!$order){
 			$error = true;
 			$code = 400;
