@@ -20,9 +20,21 @@ Route::group(array('prefix' => 'api/v1'), function(){
     Route::resource('specimen_tests', 'ApiV1Controller@getSpecimenTests');
     Route::resource('sections', 'ApiV1Controller@getLabSections');
     Route::resource('users', 'ApiV1Controller@getUsers');
-    Route::resource('visits', 'ApiV1Controller@getVisitTypes');
     Route::resource('order', 'ApiV1Controller@placeTestOrder');
     Route::resource('results', 'ApiV1Controller@getTestResults');
+});
+
+
+//Visit Types
+Route::group(array('prefix' => 'api/v1/visit_types'), function(){
+     Route::get('', 'ApiV1Controller@getVisitTypes');
+     Route::post('', 'ApiV1Controller@createVisitType');
+     Route::put('/{visit_id}', function ($visit_id) {
+        return ApiV1Controller::editVisitType($visit_id);
+     });
+     Route::delete('/{visit_id}', function ($visit_id) {
+        return ApiV1Controller::deleteVisitType($visit_id);
+     });
 });
 
 /* Routes accessible before logging in */

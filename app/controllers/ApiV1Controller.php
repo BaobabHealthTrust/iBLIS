@@ -25,6 +25,28 @@ class ApiV1Controller extends \BaseController {
 		), 200);
 	}
 
+	public function createVisitType()
+	{
+		return Response::json(array (
+			'error' => false,
+			'data' => VisitService::createVisitType(Input::all())
+		), 200);
+	}
+	public static function editVisitType($id)
+	{
+		return Response::json(array (
+			'error' => false,
+			'data' => VisitService::editVisitType($id, Input::all())
+		), 200);
+	}
+
+	public static function deleteVisitType($id){
+		return Response::json(array (
+			'error' => false,
+			'data' => VisitService::deleteVisitType($id)
+		), 200);
+	}
+
 	public function getLabSections()
 	{
 		return Response::json(array (

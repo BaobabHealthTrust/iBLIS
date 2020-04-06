@@ -13,18 +13,19 @@
 	<div class="panel-heading ">
 		<span class="glyphicon glyphicon-cog"></span>
 		{{trans('messages.list-visit-types')}}
-		<div class="panel-btn">
+		<!-- <div class="panel-btn">
 			<a class="btn btn-sm btn-info" href="{{ URL::to("visittype/create") }}" >
 				<span class="glyphicon glyphicon-plus-sign"></span>
 				{{trans('messages.add-visit-type')}}
 			</a>
-		</div>
+		</div> -->
 	</div>
 	<div class="panel-body">
 		<table class="table table-striped table-hover table-condensed search-table">
 			<thead>
 				<tr>
 					<th>{{ Lang::choice('messages.name',1) }}</th>
+					<th>{{ Lang::choice('messages.description',2) }}</th>
 					<th></th>
 				</tr>
 			</thead>
@@ -35,6 +36,7 @@
                         @endif
                         >
 					<td>{{ $value->name }}</td>
+					<td>{{ $value->description }}</td>
 					<td>
 						<!-- show the visittype (uses the show method found at GET /visittype/{id} -->
 						<a class="btn btn-sm btn-success" href="{{ URL::to("visittype/" . $value->id) }}">
@@ -48,12 +50,12 @@
 							{{trans('messages.edit')}}
 						</a>
 						<!-- delete this visittype (uses the delete method found at GET /visittype/{id}/delete -->
-						<button class="btn btn-sm btn-danger delete-item-link"
+						<!-- <button class="btn btn-sm btn-danger delete-item-link"
 							data-toggle="modal" data-target=".confirm-delete-modal"	
 							data-id='{{ URL::to("visittype/" . $value->id . "/delete") }}'>
 							<span class="glyphicon glyphicon-trash"></span>
 							{{trans('messages.delete')}}
-						</button>
+						</button> -->
 
 					</td>
 				</tr>

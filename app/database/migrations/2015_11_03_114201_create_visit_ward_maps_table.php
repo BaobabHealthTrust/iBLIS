@@ -26,8 +26,8 @@ class CreateVisitWardMapsTable extends Migration {
 			$table->integer('visit_type_id')->unsigned();
 			$table->integer('ward_id')->unsigned();
 
-			$table->foreign('visit_type_id')->references('id')->on('visit_types');
-			$table->foreign('ward_id')->references('id')->on('wards');
+			$table->foreign('visit_type_id')->references('id')->on('visit_types')->onDelete('cascade');
+			$table->foreign('ward_id')->references('id')->on('wards')->onDelete('cascade');
 		});
 	}
 

@@ -153,21 +153,22 @@ class VisitTypeController extends \BaseController {
 	 */
 	public function update($id)
 	{
-		$rules = array(
-			'name' => 'required'
-		);
-		$validator = Validator::make(Input::all(), $rules);
+		// $rules = array(
+		// 	'name' => 'required'
+		// );
+		// $validator = Validator::make(Input::all(), $rules);
 
 		// process the login
-		if ($validator->fails()) {
-			return Redirect::back()->withErrors($validator);
-		} else {
+		// if ($validator->fails()) {
+		// 	return Redirect::back()->withErrors($validator);
+		// } else {
 			// Update
 			$visittype = VisitType::find($id);
-			$visittype->name = trim(Input::get('name'));
+			// $visittype->name = trim(Input::get('name'));
+			// $visittype->description = trim(Input::get('description'));
 
 			try{
-				$visittype->save();
+				// $visittype->save();
 				$wards = Input::get('wards');
 
 				VisitTypeWard::where('visit_type_id', '=', $visittype->id)->delete();
@@ -190,7 +191,7 @@ class VisitTypeController extends \BaseController {
             
             return Redirect::to($url)
 						->with('message', trans('messages.successfully-updated-visit-type'))->with('activevisittype', $visittype ->id);
-		}
+		// }
 	}
 
 	/**

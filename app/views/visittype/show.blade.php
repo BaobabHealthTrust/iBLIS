@@ -21,6 +21,7 @@
 		<div class="panel-body">
 			<div class="display-details">
 				<h3 class="view"><strong>{{ Lang::choice('messages.name',1) }}</strong>{{ $visittype->name }} </h3>
+				<h4 class="view"><strong>{{ Lang::choice('messages.description',2) }}</strong>{{ $visittype->description }} </h4>
 				<p class="view"><strong>{{ Lang::choice('messages.wards',1) }}</strong>
 					{{ implode(", ", $wards->lists('name') )}}</p>
 			</div>

@@ -25,7 +25,11 @@
 
 			<div class="form-group">
 				{{ Form::label('name', Lang::choice('messages.name',1)) }}
-				{{ Form::text('name', Input::old('name'), array('class' => 'form-control')) }}
+				{{ Form::text('name', Input::old('name'), array('class' => 'form-control', 'disabled')) }}
+			</div>
+			<div class="form-group">
+				{{ Form::label('description', Lang::choice('messages.description',2)) }}
+				{{ Form::text('description', Input::old('description'), array('class' => 'form-control', 'disabled')) }}
 			</div>
 			<div class="form-group">
 				{{ Form::label('organisms', trans('messages.select-wards')) }}
