@@ -15,6 +15,15 @@
 | API v1 endpoints For integrating with  other Information Management Systems
 |-----------------------------------------
 */
+Route::group(['prefix' => 'api/v1/auth'], function () {
+    Route::post('login', function () {
+        return ApiV1Controller::login();
+    });
+    Route::post('logout', function () {
+        return ApiV1Controller::logout();
+    });
+});
+
 Route::group(array('prefix' => 'api/v1'), function(){
     Route::resource('specimens', 'ApiV1Controller@getSpecimens');
     Route::resource('specimen_tests', 'ApiV1Controller@getSpecimenTests');

@@ -1,5 +1,53 @@
 <?php
+
+use Illuminate\Support\Facades\Hash;
+
 class ApiV1Controller extends \BaseController {
+
+	public static function login(){
+
+        if (Input::server("REQUEST_METHOD") == "POST") 
+        {
+            $validator = Validator::make(Input::all(), array(
+                "username" => "required|min:4",
+                "password" => "required|min:6"
+            ));
+
+            $username = Input::get("username");
+
+            $message = trans('messages.invalid-login');
+
+
+			if ($validator->passes()) {
+				$credentials = array(
+					"username" => Input::get("username"),
+					"password" => Input::get("password")
+				);
+
+				if (Auth::attempt($credentials)) {
+					$auth_key = Hash::make($username);
+					Session::set("mizu_auth_key", $auth_key);
+
+					return Response::json(array (
+						'error' => false,
+						'data' => ['auth_key' => $auth_key]
+					), 200);
+				}
+
+				return Response::json(array (
+					'error' => true,
+					'data' => ['message' => 'Bad request']
+				), 401);
+			}
+
+        }
+    }
+
+
+	public static function logout() {
+
+	}
+
 
 	public function getSpecimens()
 	{
