@@ -21,11 +21,13 @@ class LabTestService {
     public static function getTestResults($accession_number)
     {
         return DB::select("SELECT 
+            test_statuses.name as test_status,
             interpretation as result, 
             test_types.name as test_type,
             not_done_reasons, time_completed, time_started
             FROM tests 
             JOIN test_types on test_types.id = tests.test_type_id
+            JOIN test_statuses on test_statuses.id
             WHERE accession_number= '".$accession_number."'");
     }
 
