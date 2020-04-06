@@ -9,6 +9,14 @@ class ApiV1Controller extends \BaseController {
 		), 200);
 	}
 
+	public function getTestResults($accession_number)
+	{
+		return Response::json(array (
+			'error'=> false, 
+			'data' => LabTestService::getTestResults($accession_number)
+		), 200);
+	}
+
 	public function getSpecimenTests($specimen_id)
 	{
 	    return Response::json(array (
@@ -77,21 +85,4 @@ class ApiV1Controller extends \BaseController {
 		return Response::json(array ('error' => $error, 'data' => $order ), $code);
 	}
 
-	public function getTestResults($accession_number)
-	{
-		$test = LabTestService::getTestByAccessionNumber($accession_number);
-		$error = false;
-		$code = 200;
-		$data = [];
-		if ($test){
-			$data = ResultsService::getResultsByAccessionNumber($test->id);
-		}else{
-			$code = 404;
-			$error = true;
-		}
-		return Response::json(array (
-			'error'=> $error, 
-			'data' => $data
-		), $code);
-	}
 }

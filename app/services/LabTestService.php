@@ -18,6 +18,17 @@ class LabTestService {
         return $test_type;
     }
     
+    public static function getTestResults($accession_number)
+    {
+        return DB::select("SELECT 
+            interpretation as result, 
+            test_types.name as test_type,
+            not_done_reasons, time_completed, time_started
+            FROM tests 
+            JOIN test_types on test_types.id = tests.test_type_id
+            WHERE accession_number= '".$accession_number."'");
+    }
+
     public static function getTestCategory($name, $description='N/A')
     {
         $test_cat = DB::table('test_categories')->where('name', $name)->first();
