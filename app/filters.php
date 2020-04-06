@@ -47,6 +47,26 @@ Route::filter('auth.basic', function()
 	return Auth::basic();
 });
 
+Route::filter('api.auth', function($route, $request)
+{
+    $api_key = $request->session()->get('mizu_auth_key');
+    if (!$api_key) { 
+        return Response::json(array (
+            'error' => true,
+            'data' => ['message' => 'Login required!']
+        ), 401);    
+    }
+    // echo $api_key;
+    // exit;
+    if ( $api_key != $request->headers->get('authorization')) {
+        return Response::json(array (
+            'error' => true,
+            'data' => ['message' => 'Invalid credentials']
+        ), 401);
+    }
+        
+});
+
 /*
 |--------------------------------------------------------------------------
 | Guest Filter

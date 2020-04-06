@@ -24,7 +24,7 @@ Route::group(['prefix' => 'api/v1/auth'], function () {
     });
 });
 
-Route::group(array('prefix' => 'api/v1'), function(){
+Route::group(array('prefix' => 'api/v1', 'before' => 'api.auth'), function(){
     Route::resource('specimens', 'ApiV1Controller@getSpecimens');
     Route::resource('specimen_tests', 'ApiV1Controller@getSpecimenTests');
     Route::resource('sections', 'ApiV1Controller@getLabSections');
