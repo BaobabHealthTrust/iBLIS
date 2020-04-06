@@ -18,7 +18,15 @@ class TestDataSeeder extends DatabaseSeeder
 	        		"username" => "administrator", "password" => Hash::make("password"), "email" => "admin@kblis.org",
 	               	"name" => "kBLIS Administrator", "designation" => "Programmer"
 	        	)
-	        );
+            );
+
+            $mizu = DB::table('users')->insert(
+                array(
+                    "username" => "mizu", "password" => Hash::make("password"), "email" => "mizu@kblis.org",
+                    "name" => "Mizu Application", "designation" => "Administrator"
+                )
+            );
+            
         	$this->command->info('users seeded');
         }
         //$this->command->info('users seeded');

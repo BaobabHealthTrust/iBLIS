@@ -16,6 +16,10 @@ class KBLISMinimalSeed extends Seeder
                 "username" => "external", "password" => Hash::make("password"), "email" => "admin@kblis.org",
                 "name" => "External System User", "designation" => "Administrator", "image" => "/i/users/user-2.jpg"
             ),
+            array(
+                "username" => "mizu", "password" => Hash::make("password"), "email" => "admin@kblis.org",
+                "name" => "Mizu Application", "designation" => "Administrator", "image" => "/i/users/user-2.jpg"
+            ),
         );
 
         foreach ($usersData as $user)
