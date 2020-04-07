@@ -18,7 +18,7 @@ class ApiV1Controller extends \BaseController {
 			
 			if (Auth::attempt($credentials)) {
 				$auth_key = Hash::make($credentials['username'].'+'.$credentials['password']);
-				Session::set("api_key", $auth_key);
+				$users = DB::select('update users set remember_token =  ? where username = ?', [$auth_key, $credentials['username']]);
 
 				return Response::json(array (
 					'error' => false,

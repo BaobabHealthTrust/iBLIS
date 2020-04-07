@@ -49,9 +49,9 @@ Route::filter('auth.basic', function()
 
 Route::filter('api.auth', function($route, $request)
 {
-    $api_key = $request->session()->get('api_key');
-
-    if (!$api_key or $api_key != $request->headers->get('authorization')) { 
+    $user = $users = DB::select('select * from users where remember_token = ?', [$request->headers->get('authorization')]);
+    // return [strval($api_key), strval($request->headers->get('authorization'))];
+    if (empty($user)) { 
         return Response::json(array (
             'error' => true, 'data' => [ 'message' => 'Unauthorized Resource' ]
         ), 401);
