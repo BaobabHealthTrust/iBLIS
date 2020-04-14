@@ -112,16 +112,17 @@ class ApiV1Controller extends \BaseController {
 
 	public function createUser()
 	{
+		Log::info(json_encode(Input::all()));
 		$error = false;
 		$code = 201;
 		$data = [];
 		$user = new User;
-		$user->username = Request::get('username');
-        $user->name = Request::get('full_name');
-        $user->gender = Request::get('gender');
-        $user->designation = Request::get('designation');
-        $user->email = Request::get('email');
-		$user->password = Hash::make(Request::get('password'));
+		$user->username = Input::get('username');
+        $user->name = Input::get('full_name');
+        $user->gender = Input::get('gender');
+        $user->designation = Input::get('designation');
+        $user->email = Input::get('email');
+		$user->password = Hash::make(Input::get('password'));
 		
 		if($user->save()){
 			$data = $user;
