@@ -566,12 +566,19 @@ $(function(){
 			$('.measurevalue.new-measure-'+measureID+' input.measurerangeid').attr(
 				'name', 'new-measures['+measureID+'][measurerangeid][]');
 		} else{
+			console.log("Am in here");
 			$('.measurevalue.new-measure-'+measureID+' input.val').attr(
 				'name', 'new-measures['+measureID+'][val][]');
 			$('.measurevalue.new-measure-'+measureID+' input.interpretation').attr(
 				'name', 'new-measures['+measureID+'][interpretation][]');
 			$('.measurevalue.new-measure-'+measureID+' input.measurerangeid').attr(
 				'name', 'new-measures['+measureID+'][measurerangeid][]');
+            $('.measurevalue.new-measure-'+measureID+' input.hl7_identifier').attr(
+							'name', 'new-measures['+measureID+'][hl7_identifier][]');
+			$('.measurevalue.new-measure-'+measureID+' input.hl7_text').attr(
+							'name', 'new-measures['+measureID+'][hl7_text][]');
+			$('.measurevalue.new-measure-'+measureID+' input.hl7_coding_system').attr(
+							'name', 'new-measures['+measureID+'][hl7_coding_system][]');
 		}
 	}
 
