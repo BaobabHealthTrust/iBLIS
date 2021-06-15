@@ -11,7 +11,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="form-group">
-                        {a{ Form::label('new-measures[][measure_type_id]', trans('messages.measure-type')) }}
+                        {{ Form::label('new-measures[][measure_type_id]', trans('messages.measure-type')) }}
                             <select class="form-control measuretype-input-trigger measure_type_id" 
                                 data-measure-id="0" 
                                 data-new-measure-id="" 
